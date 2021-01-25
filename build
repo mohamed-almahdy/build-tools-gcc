@@ -550,6 +550,7 @@ function setup_env() {
         ln -s -f "${ROOT}/isl" isl
     fi
 
+    if [[ -z ${NO_UPDATE} ]]; then
     if [[ ${VERSION} -eq 4 ]]; then
         # GCC 4.9 (ARM/i686): error: ‘SIGSEGV' was not declared in this scope
         GCC_PATCH="942-asan-fix-missing-include-signal-h"
@@ -565,6 +566,7 @@ function setup_env() {
     fi
 
     patch -Np1 < "${ROOT}"/patches/${GCC_PATCH}.patch || die "Failed to patch GCC source!"
+    fi
 
     cd ..
 
