@@ -16,6 +16,7 @@
 
 # http://preshing.com/20141119/how-to-build-a-gcc-cross-compiler/ # credits for almost everything
 # http://www.mpfr.org/
+# https://ftp.gnu.org/gnu/mpfr/
 # https://gmplib.org/
 # http://www.multiprecision.org/
 # http://isl.gforge.inria.fr/
@@ -375,7 +376,8 @@ function download_sources() {
 
     if [[ ! -f ${MPFR}.tar.xz ]]; then
         header "DOWNLOADING MPFR"
-        axel https://www.mpfr.org/mpfr-current/${MPFR}.tar.xz
+        axel https://ftp.gnu.org/gnu/mpfr/${MPFR}.tar.xz
+        #https://www.mpfr.org/mpfr-current/
     fi
 
     if [[ ! -f ${GMP}.tar.xz ]]; then
