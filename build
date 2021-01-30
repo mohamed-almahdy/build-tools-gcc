@@ -339,9 +339,6 @@ function build_binaries() {
 
     if [[ ! -f ${PREBUILTS_BIN}/axel ]]; then
         AXEL=${ROOT}/sources/axel
-        [[ ! -d ${AXEL} ]] && git -C "$(dirname "${AXEL}")" clone --depth=1 https://github.com/axel-download-accelerator/axel
-        git -C "${AXEL}" clean -fxdq
-        git -C "${AXEL}" pull
         (
             cd "${AXEL}" || die "Issue with cloning axel source!"
             autoreconf -fiv
