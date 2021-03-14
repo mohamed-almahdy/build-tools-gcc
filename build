@@ -184,7 +184,7 @@ function setup_variables() {
     MPC="mpc-1.2.0"
     ISL="isl-0.22.1"
     GLIBC="glibc-2.32"
-    LINUX="5.4.61"
+    LINUX="3.6.11"
 
     # Start of script
     START=$(date +%s)
@@ -264,10 +264,11 @@ function parse_parameters() {
     else
         # Set GCC branch based on version and Linaro or not
         case "${SOURCE}:${VERSION}" in
-            "gnu:4") GCC=gcc-4.9.4
-                     BINUTILS_tar="2.29.1"
-                     GLIBC="glibc-2.26"
-                     ISL="isl-0.17.1"
+            "gnu:4") GCC=gcc-4.8.5
+                     MPC="mpc-1.1.0"
+                     BINUTILS_tar="2.24"
+                     GLIBC="glibc-2.24"
+                     ISL="isl-0.12"
                      EXT=gz ;;
             "gnu:5") GCC=gcc-5.5.0
                      GLIBC="glibc-2.27"
@@ -414,14 +415,14 @@ function download_sources() {
             git_clone https://git.linaro.org/toolchain/gcc.git -b ${GCC}
         fi
     else
-        if [[ ! -f binutils-${BINUTILS_tar}.tar.xz ]]; then
+        if [[ ! -f binutils-${BINUTILS_tar}.tar.gz ]]; then
             header "DOWNLOADING BINUTILS ${BINUTILS_tar} FOR GCC ${VERSION}"
-            axel https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_tar}.tar.xz
+            axel https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_tar}.tar.gz
         fi
 
-        if [[ ! -f ${ISL}.tar.xz ]]; then
+        if [[ ! -f ${ISL}.tar.gz ]]; then
             header "DOWNLOADING ISL ${ISL} FOR GCC ${VERSION}"
-            axel http://isl.gforge.inria.fr/${ISL}.tar.xz
+            axel http://isl.gforge.inria.fr/${ISL}.tar.gz
         fi
 
         # GNU, any version
@@ -470,8 +471,8 @@ function extract_sources() {
     extract ${GLIBC}.tar.xz ../${GLIBC}
     extract linux-${LINUX}.tar.xz ../linux
     if [[ -n ${TARBALLS} ]]; then
-        extract binutils-${BINUTILS_tar}.tar.xz ../binutils
-        extract ${ISL}.tar.xz ../${ISL}
+        extract binutils-${BINUTILS_tar}.tar.gz ../binutils
+        extract ${ISL}.tar.gz ../${ISL}
         if [[ ${SOURCE} = "linaro" && ${VERSION} -ge 8 ]]; then
             # We can't use extract function here as this ships other GNU tools
             # Only extract GCC source and later rename it to gcc
@@ -549,24 +550,6 @@ function setup_env() {
         ln -s -f "${ROOT}/isl" isl
     fi
 
-    if [[ -z ${NO_UPDATE} ]]; then
-    if [[ ${VERSION} -eq 4 ]]; then
-        # GCC 4.9 (ARM/i686): error: ‘SIGSEGV' was not declared in this scope
-        GCC_PATCH="942-asan-fix-missing-include-signal-h"
-    elif [[ ${VERSION} -ge 6 ]] && [[ ${VERSION} -le 8 ]]; then
-        # GCC 6-8 (i686): error: ‘PATH_MAX' undeclared here (not in a function)
-        GCC_PATCH="GCC_6-8"
-    elif [[ ${VERSION} -eq 9 ]]; then
-        # GNU GCC 9: error: ‘PATH_MAX' was not declared on this scope
-        GCC_PATCH="GCC_9"
-    else
-        # GNU GCC 10 (any): error: ‘PATH_MAX' was not declared on this scope
-        GCC_PATCH="GCC_10_up"
-    fi
-
-    patch -Np1 < "${ROOT}"/patches/${GCC_PATCH}.patch || die "Failed to patch GCC source!"
-    fi
-
     cd ..
 
     if [[ -z ${VERBOSE} ]]; then
@@ -607,7 +590,8 @@ function build_gcc() {
     ../gcc/configure "${CONFIGURATION[@]}" \
                      --enable-languages=c,c++ \
                      --target=${TARGET} \
-                     --prefix="${INSTALL}"
+                     --prefix="${INSTALL}" \
+                     MAKEINFO=missing
     make all-gcc "${JOBS}" || die "Error while building gcc!" -n
     make install-gcc "${JOBS}" || die "Error while installing gcc!" -n
     if [[ ${ARCH} = "x86_64" ]]; then
